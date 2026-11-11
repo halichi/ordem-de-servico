@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pedido de Venda - ECOPLANET AMBIENTAL LTDA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Tipografia padrão de planilha (Calibri / Carlito / Segoe UI / Arial) */
+    :root {
+      --bg-green-light: #d9ead3;
+      --bg-green-subtotal: #bde5c8;
+      --bg-blue-header: #1582a7;
+      --text-blue-title: #0b7295;
+      --border-gray: #9e9e9e;
+      --border-grid: #a6a6a6;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: Calibri, 'Segoe UI', Arial, Helvetica, sans-serif;
+      background-color: #e5e7eb;
+      color: #000000;
+      margin: 0;
+      padding: 24px 12px 48px;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+    /* Container da folha de pedido */
+    .sheet-container {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      padding: 10px 12px 24px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      border-radius: 2px;
+    }
+
+    /* Tabela Mestra com as 6 colunas sincronizadas da planilha */
+    .spreadsheet-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .spreadsheet-table td,
+    .spreadsheet-table th {
+      padding: 0;
+      height: 22px;
+      vertical-align: middle;
+      font-weight: normal;
+      font-size: 14px;
+    }
+
+    /* Cabeçalho da Empresa */
+    .company-header-box {
+      border: 1px solid #999999;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      background: #ffffff;
+    }
+
+    .company-logo-col {
+      width: 25.1%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding-right: 8px;
+      user-select: none;
+    }
+
+    .company-info-col {
+      width: 74.9%;
+      padding-left: 4px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .company-title {
+      color: var(--text-blue-title);
+      font-weight: 700;
+      font-size: 15.5px;
+      letter-spacing: 0.1px;
+      line-height: 1.2;
+    }
+
+    .company-detail {
+      color: #595959;
+      font-size: 13.5px;
+      line-height: 1.25;
+    }
+
+    /* Inputs estilo célula de planilha */
+    .cell-input {
+      width: 100%;
+      height: 22px;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 14px;
+      color: #000000;
+      padding: 1px 5px;
+      outline: none;
+      border-radius: 0;
+    }
+
+    .cell-input:focus {
+      box-shadow: inset 0 0 0 1.5px #1582a7;
+      background-color: rgba(255, 255, 255, 0.35);
+    }
+
+    /* Fundos de células */
+    .bg-cell-green {
+      background-color: var(--bg-green-light);
+    }
+
+    .bg-cell-subtotal {
+      background-color: var(--bg-green-subtotal);
+    }
+
+    .bg-cell-blue {
+      background-color: var(--bg-blue-header);
+      color: #000000;
+    }
+
+    /* Bordas de grade */
+    .grid-cell {
+      border: 1px solid var(--border-grid);
+    }
+
+    .border-bottom-black {
+      border-bottom: 1px solid #000000 !important;
+    }
+
+    /* Alinhamentos */
+    .text-center-input {
+      text-align: center;
+    }
+
+    .text-right-input {
+      text-align: right;
+    }
+
+    .text-left-input {
+      text-align: left;
+    }
+
+    .label-cell {
+      padding-right: 4px !important;
+      white-space: nowrap;
+      color: #000000;
+    }
+
+    .label-right-col {
+      padding-left: 4px !important;
+      white-space: nowrap;
+      color: #000000;
+    }
+
+    .spacer-row td {
+      height: 18px !important;
+      border: none !important;
+      background: transparent !important;
+    }
+
+    /* Responsividade para telas pequenas */
+    .sheet-scroll-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    /* Configuração de Impressão */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 10mm;
+      }
+
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      .sheet-container {
+        box-shadow: none !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .cell-input:focus {
+        box-shadow: none !important;
+        background-color: transparent !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra de Ações (Oculta na Impressão) -->
+  <div class="no-print max-w-[760px] mx-auto mb-4 bg-white p-3 rounded-lg shadow flex flex-col gap-2.5 border border-gray-200">
+    <!-- Linha Superior da Barra: Título, Controle de O.S. e Ações Principais -->
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-3 h-3 rounded-full bg-[#1582a7]"></span>
+        <span class="font-semibold text-gray-700 text-sm">Pedido &amp; Ordem de Serviço — Ecoplanet Ambiental</span>
+        <span id="badgeOsAtual" class="px-2 py-0.5 text-xs font-bold bg-[#d9ead3] text-gray-800 rounded border border-green-300">
+          O.S. Nº 0001
+        </span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          onclick="gerarNovaOS()"
+          class="px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded shadow-sm flex items-center gap-1 transition"
+          title="Incrementa o número da Ordem de Serviço (+1) e atualiza a data de emissão"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Nova O.S. (Próximo Nº)
+        </button>
+        <button
+          type="button"
+          onclick="abrirModalConfigOS()"
+          class="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded transition"
+          title="Definir manualmente o número atual da sequência de O.S."
+        >
+          Ajustar Nº O.S.
+        </button>
+        <button
+          type="button"
+          onclick="window.print()"
+          class="px-3.5 py-1.5 text-xs font-semibold text-white bg-[#1582a7] hover:bg-[#0b7295] rounded shadow-sm flex items-center gap-1.5 transition"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          Imprimir / Salvar PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Linha Inferior da Barra: Regra de ICMS e Utilitários -->
+    <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100 text-xs">
+      <div class="flex flex-wrap items-center gap-2">
+        <label for="modoCalculoIcms" class="font-medium text-gray-600">Regra do ICMS no Total:</label>
+        <select
+          id="modoCalculoIcms"
+          onchange="recalcularTudo()"
+          class="px-2 py-1 text-xs bg-gray-50 border border-gray-300 rounded text-gray-800 font-medium focus:outline-none focus:border-[#1582a7]"
+        >
+          <option value="somar">Somar ICMS + IPI ao Total do Pedido</option>
+          <option value="incluso">ICMS Incluso no Preço (Apenas Destaque Fiscal)</option>
+        </select>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          onclick="gerarDuplicatasAutomaticas()"
+          class="px-2.5 py-1 text-xs font-medium text-[#0b7295] bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded transition"
+          title="Preenche a tabela de duplicatas com base no total do pedido"
+        >
+          Gerar Duplicata do Total
+        </button>
+        <button
+          type="button"
+          onclick="restaurarExemplo()"
+          class="px-2.5 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded transition"
+        >
+          Restaurar Exemplo
+        </button>
+        <button
+          type="button"
+          onclick="abrirModalLimpar()"
+          class="px-2.5 py-1 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition"
+        >
+          Limpar Campos
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Folha da Planilha -->
+  <div class="sheet-scroll-wrapper">
+    <div class="sheet-container min-w-[660px]">
+
+      <!-- 1. CABEÇALHO COM BORDA CINZA -->
+      <div class="company-header-box">
+        <!-- Esquerda: Logotipo SVG estilizado fiel à marca -->
+        <div class="company-logo-col">
+          <svg viewBox="0 0 220 115" width="165" height="88" xmlns="http://www.w3.org/2000/svg" aria-label="Logo Ecoplanet Ambiental">
+            <!-- Globo Circular Estilizado Azul e Verde -->
+            <g transform="translate(110, 44)">
+              <!-- Arco superior azul -->
+              <path d="M -29 -6 C -24 -27, 4 -35, 22 -22 C 10 -26, -12 -20, -21 -2 Z" fill="#0d80a6" />
+              <!-- Faixa central azul -->
+              <path d="M -31 4 C -10 2, 14 -6, 30 -22 C 25 -8, 4 6, -28 12 Z" fill="#0d80a6" />
+              <!-- Faixa interna verde-oliva -->
+              <path d="M -25 17 C -2 15, 19 3, 31 -14 C 29 2, 11 19, -18 23 Z" fill="#5b7f1b" />
+              <!-- Arco inferior verde-oliva -->
+              <path d="M -11 27 C 8 27, 25 14, 31 -2 C 29 19, 10 33, -11 27 Z" fill="#5b7f1b" />
+            </g>
+            <!-- Texto Principal do Logo -->
+            <text x="110" y="92" text-anchor="middle" fill="#136a86" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="13.2" letter-spacing="0.4">
+              ECOPLANET AMBIENTAL
+            </text>
+            <!-- Subtítulo do Logo -->
+            <text x="110" y="103" text-anchor="middle" fill="#7f7f7f" font-family="Arial, Helvetica, sans-serif" font-weight="600" font-size="6.3" letter-spacing="0.35">
+              RECICLAR É UM ATO DE SUSTENTABILIDADE
+            </text>
+          </svg>
+        </div>
+
+        <!-- Direita: Dados da Empresa -->
+        <div class="company-info-col">
+          <div class="company-title">ECOPLANET AMBIENTAL LTDA</div>
+          <div class="company-detail">AVENIDA PREFEITO OLAVO GOMES DE OLIVEIRA, 6900 - VENEZA</div>
+          <div class="company-detail">POUSO ALEGRE - MG &nbsp;&nbsp;CEP: 37561-145</div>
+          <div class="company-detail">FONE: (11) 91221-3535</div>
+          <div class="company-detail">E-MAIL: ecoplanetambiental@gmail.com</div>
+        </div>
+      </div>
+
+      <!-- TABELA MESTRA DE 6 COLUNAS (Alinhamento idêntico ao Excel) -->
+      <table class="spreadsheet-table" id="orderFormTable">
+        <colgroup>
+          <col style="width: 12.9%;" /> <!-- Col 1: Peças / Documento / Labels Esq -->
+          <col style="width: 12.2%;" /> <!-- Col 2: Qtde / Emissão -->
+          <col style="width: 13.5%;" /> <!-- Col 3: Unid. / Vencimento -->
+          <col style="width: 29.0%;" /> <!-- Col 4: Produto / IPI % -->
+          <col style="width: 12.5%;" /> <!-- Col 5: Preço R$ / Labels Dir -->
+          <col style="width: 19.9%;" /> <!-- Col 6: SubTotal R$ / Valores Dir -->
+        </colgroup>
+
+        <tbody>
+          <!-- Espaçamento -->
+          <tr class="spacer-row"><td colspan="6"></td></tr>
+
+          <!-- 2. LINHA DE PEDIDO, ORDEM DE SERVIÇO (O.S.) CRESCENTE E EMISSÃO -->
+          <tr>
+            <td class="label-cell">Pedido Número:</td>
+            <td class="bg-cell-green">
+              <input type="text" id="pedidoNumero" class="cell-input text-center-input font-semibold" aria-label="Pedido Número" />
+            </td>
+            <td class="label-right-col">O.S. Número:</td>
+            <td class="bg-cell-green">
+              <input
+                type="text"
+                id="osNumero"
+                class="cell-input text-center-input font-bold"
+                aria-label="Número da Ordem de Serviço"
+                title="Número sequencial crescente da Ordem de Serviço"
+              />
+            </td>
+            <td class="label-right-col">Emissão:</td>
+            <td class="bg-cell-green">
+              <input type="text" id="pedidoEmissao" class="cell-input text-center-input" aria-label="Data de Emissão" />
+            </td>
+          </tr>
+
+          <!-- Espaçamento -->
+          <tr class="spacer-row"><td colspan="6"></td></tr>
+
+          <!-- 3. BLOCO DE DADOS DO CLIENTE (5 Linhas, 2 Colunas de Inputs Verdes) -->
+          <tr>
+            <td class="label-cell">Cliente:</td>
+            <td colspan="3" class="bg-cell-green">
+              <input type="text" id="clienteNome" class="cell-input" aria-label="Cliente" />
+            </td>
+            <td class="label-right-col">A/C:</td>
+            <td class="bg-cell-green">
+              <input type="text" id="clienteAC" class="cell-input" aria-label="A/C" />
+            </td>
+          </tr>
+          <tr>
+            <td class="label-cell">Endereço:</td>
+            <td colspan="3" class="bg-cell-green">
+              <input type="text" id="clienteEndereco" class="cell-input" aria-label="Endereço" />
+            </td>
+            <td class="label-right-col">CEP:</td>
+            <td class="bg-cell-green">
+              <input type="text" id="clienteCEP" class="cell-input" aria-label="CEP" />
+            </td>
+          </tr>
+          <tr>
+            <td class="label-cell">Bairro:</td>
+            <td colspan="3" class="bg-cell-green">
+              <input type="text" id="clienteBairro" class="cell-input" aria-label="Bairro" />
+            </td>
+            <td class="label-right-col">Cidade/UF:</td>
+            <td class="bg-cell-green">
+              <input type="text" id="clienteCidadeUF" class="cell-input" aria-label="Cidade/UF" />
+            </td>
+          </tr>
+          <tr>
+            <td class="label-cell">CNPJ:</td>
+            <td colspan="3" class="bg-cell-green">
+              <input type="text" id="clienteCNPJ" class="cell-input" aria-label="CNPJ" />
+            </td>
+            <td class="label-right-col">I.E.:</td>
+            <td class="bg-cell-green">
+              <input type="text" id="clienteIE" class="cell-input" aria-label="Inscrição Estadual" />
+            </td>
+          </tr>
+          <tr>
+            <td class="label-cell">Contato:</td>
+            <td colspan="3" class="bg-cell-green">
+              <input type="text" id="clienteContato" class="cell-input" aria-label="Contato" />
+            </td>
+            <td class="label-right-col">Fone:</td>
+            <td class="bg-cell-green">
+              <input type="text" id="clienteFone" class="cell-input" aria-label="Telefone" />
+            </td>
+          </tr>
+
+          <!-- Espaçamento -->
+          <tr class="spacer-row"><td colspan="6"></td></tr>
+
+          <!-- 4. TABELA DE PRODUTOS (Cabeçalho + 10 Linhas) -->
+          <tr>
+            <th class="bg-cell-blue grid-cell text-center">Peças</th>
+            <th class="bg-cell-blue grid-cell text-center">Qtde</th>
+            <th class="bg-cell-blue grid-cell text-center">Unid.</th>
+            <th class="bg-cell-blue grid-cell text-center">Produto</th>
+            <th class="bg-cell-blue grid-cell text-center">Preço R$</th>
+            <th class="bg-cell-blue grid-cell text-center">SubTotal R$</th>
+          </tr>
+        </tbody>
+
+        <!-- Corpo das 10 linhas gerado e controlado via JS -->
+        <tbody id="produtosBody"></tbody>
+
+        <!-- 5. TOTAIS, IPI E ICMS -->
+        <tbody>
+          <!-- Linha 1: VALOR TOTAL DOS PRODUTOS -->
+          <tr>
+            <td colspan="4" class="text-right pr-1">VALOR TOTAL DOS PRODUTOS</td>
+            <td></td>
+            <td class="bg-cell-subtotal text-right pr-1.5" id="valorTotalProdutos">R$ 412,50</td>
+          </tr>
+
+          <!-- Linha 2: IPI (%) | Input 5,00% | Valor IPI: | Valor Calculado -->
+          <tr>
+            <td class="label-cell">IPI (%)</td>
+            <td colspan="2"></td>
+            <td class="bg-cell-green">
+              <input
+                type="text"
+                id="ipiPercentual"
+                value="5,00%"
+                class="cell-input text-right-input pr-1.5"
+                aria-label="Percentual de IPI"
+              />
+            </td>
+            <td class="label-right-col">Valor IPI:</td>
+            <td class="bg-cell-subtotal text-right pr-1.5" id="valorIpiCalculado">R$ 20,63</td>
+          </tr>
+
+          <!-- Linha 3: ICMS (%) | Input 18,00% | Valor ICMS: | Valor Calculado -->
+          <tr>
+            <td class="label-cell">ICMS (%)</td>
+            <td colspan="2"></td>
+            <td class="bg-cell-green">
+              <input
+                type="text"
+                id="icmsPercentual"
+                value="18,00%"
+                class="cell-input text-right-input pr-1.5"
+                aria-label="Percentual de ICMS"
+              />
+            </td>
+            <td class="label-right-col">Valor ICMS:</td>
+            <td class="bg-cell-subtotal text-right pr-1.5" id="valorIcmsCalculado">R$ 74,25</td>
+          </tr>
+
+          <!-- Linha 4: VALOR TOTAL DO PEDIDO -->
+          <tr>
+            <td colspan="4" class="text-right pr-1" id="labelValorTotalPedido">VALOR TOTAL DO PEDIDO (COM IPI E ICMS)</td>
+            <td></td>
+            <td class="bg-cell-subtotal text-right pr-1.5 font-semibold" id="valorTotalPedido">R$ 507,38</td>
+          </tr>
+
+          <!-- Espaçamento Duplo como no original -->
+          <tr class="spacer-row"><td colspan="6"></td></tr>
+          <tr class="spacer-row"><td colspan="6" style="height: 10px !important;"></td></tr>
+
+          <!-- 6. TABELA DE DUPLICATAS -->
+          <tr>
+            <th colspan="6" class="bg-cell-blue grid-cell text-center">DUPLICATAS</th>
+          </tr>
+          <tr>
+            <th class="bg-cell-subtotal grid-cell text-center">Documento</th>
+            <th class="bg-cell-subtotal grid-cell text-center">Emissão</th>
+            <th class="bg-cell-subtotal grid-cell text-center">Vencimento</th>
+            <th colspan="3" class="bg-cell-subtotal grid-cell text-center">Valor R$</th>
+          </tr>
+
+          <!-- 3 Linhas Editáveis de Duplicatas -->
+          <tr>
+            <td class="bg-cell-green grid-cell">
+              <input type="text" class="cell-input text-center-input dup-doc" aria-label="Documento Duplicata 1" />
+            </td>
+            <td class="bg-cell-green grid-cell">
+              <input type="text" class="cell-input text-center-input dup-emissao" aria-label="Emissão Duplicata 1" />
+            </td>
+            <td class="bg-cell-green grid-cell">
+              <input type="text" class="cell-input text-center-input dup-venc" aria-label="Vencimento Duplicata 1" />
+            </td>
+            <td colspan="3" class="bg-cell-green grid-cell">
+              <input type="text" class="cell-input text-center-input dup-valor" aria-label="Valor Duplicata 1" />
+            </td>
+          </tr>
+          <tr>
+            <td class="bg-cell-green grid-cell">
+              <input type="text" class="cell-input text-center-input dup-doc" aria-label="Documento Duplicata 2" />
+            </td>
+            <td class="bg-cell-green grid-cell">
+              <input type="text" class="cell-input text-center-input dup-emissao" aria-label="Emissão Duplicata 2" />
+            </td>
+            <td class="bg-cell-green grid-cell">
+              <input type="text" class="cell-input text-center-input dup-venc" aria-label="Vencimento Duplicata 2" />
+            </td>
+            <td colspan="3" class="bg-cell-green grid-cell">
+              <input type="text" class="cell-input text-center-input dup-valor" aria-label="Valor Duplicata 2" />
+            </td>
+          </tr>
+          <tr>
+            <td class="bg-cell-green grid-cell">
+              <input type="text" class="cell-input text-center-input dup-doc" aria-label="Documento Duplicata 3" />
+            </td>
+            <td class="bg-cell-green grid-cell">
+              <input type="text" class="cell-input text-center-input dup-emissao" aria-label="Emissão Duplicata 3" />
+            </td>
+            <td class="bg-cell-green grid-cell">
+              <input type="text" class="cell-input text-center-input dup-venc" aria-label="Vencimento Duplicata 3" />
+            </td>
+            <td colspan="3" class="bg-cell-green grid-cell">
+              <input type="text" class="cell-input text-center-input dup-valor" aria-label="Valor Duplicata 3" />
+            </td>
+          </tr>
+
+          <!-- Espaçamento -->
+          <tr class="spacer-row"><td colspan="6"></td></tr>
+          <tr class="spacer-row"><td colspan="6" style="height: 8px !important;"></td></tr>
+
+          <!-- 7. CAMPOS INFERIORES (Vendedor, Condições Pagto, Transportadora) -->
+          <tr>
+            <td colspan="2" class="label-cell">Vendedor:</td>
+            <td colspan="4" class="bg-cell-green border-bottom-black">
+              <input type="text" id="vendedor" class="cell-input" aria-label="Vendedor" />
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" class="label-cell">Condições Pagto:</td>
+            <td colspan="4" class="bg-cell-green border-bottom-black">
+              <input type="text" id="condicoesPagto" class="cell-input" aria-label="Condições de Pagamento" />
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" class="label-cell">Transportadora:</td>
+            <td colspan="4" class="bg-cell-green border-bottom-black">
+              <input type="text" id="transportadora" class="cell-input" aria-label="Transportadora" />
+            </td>
+          </tr>
+
+          <!-- Espaçamento -->
+          <tr class="spacer-row"><td colspan="6"></td></tr>
+
+          <!-- 8. SEÇÃO OBSERVAÇÕES -->
+          <tr>
+            <td colspan="6" class="label-cell">OBSERVAÇÕES:</td>
+          </tr>
+          <tr>
+            <td colspan="6" class="bg-cell-green border-bottom-black">
+              <input type="text" id="obs1" class="cell-input" aria-label="Observações Linha 1" />
+            </td>
+          </tr>
+          <tr>
+            <td colspan="6" class="bg-cell-green border-bottom-black">
+              <input type="text" id="obs2" class="cell-input" aria-label="Observações Linha 2" />
+            </td>
+          </tr>
+          <tr>
+            <td colspan="6" class="bg-cell-green border-bottom-black">
+              <input type="text" id="obs3" class="cell-input" aria-label="Observações Linha 3" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+
+  <!-- Modal Customizado de Confirmação para Limpar Formulário -->
+  <div id="modalLimpar" class="no-print fixed inset-0 bg-black/40 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg max-w-sm w-full p-5 shadow-xl border border-gray-200">
+      <h3 class="text-base font-bold text-gray-800 mb-2">Limpar todos os campos?</h3>
+      <p class="text-sm text-gray-600 mb-4">
+        Esta ação apagará os itens e informações preenchidas no pedido atual para iniciar um pedido em branco.
+      </p>
+      <div class="flex justify-end gap-2">
+        <button
+          type="button"
+          onclick="fecharModalLimpar()"
+          class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onclick="confirmarLimparFormulario()"
+          class="px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded transition"
+        >
+          Sim, Limpar Tudo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Customizado para Definir/Ajustar o Número da Ordem de Serviço (O.S.) -->
+  <div id="modalConfigOS" class="no-print fixed inset-0 bg-black/40 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg max-w-sm w-full p-5 shadow-xl border border-gray-200">
+      <h3 class="text-base font-bold text-gray-800 mb-1">Ajustar Sequência de O.S.</h3>
+      <p class="text-xs text-gray-600 mb-3">
+        Informe o número atual da Ordem de Serviço. As próximas O.S. geradas seguirão de forma crescente a partir deste número.
+      </p>
+      <div class="mb-4">
+        <label for="inputNovoNumeroOS" class="block text-xs font-semibold text-gray-700 mb-1">Número da O.S. / Pedido:</label>
+        <input
+          type="number"
+          id="inputNovoNumeroOS"
+          min="1"
+          step="1"
+          class="w-full px-3 py-2 border border-gray-300 rounded text-sm font-semibold text-gray-800 focus:outline-none focus:border-[#1582a7]"
+          placeholder="Ex: 1050"
+        />
+      </div>
+      <div class="flex justify-end gap-2">
+        <button
+          type="button"
+          onclick="fecharModalConfigOS()"
+          class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onclick="salvarConfigOS()"
+          class="px-3.5 py-1.5 text-xs font-semibold text-white bg-[#1582a7] hover:bg-[#0b7295] rounded transition"
+        >
+          Salvar Número
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const TOTAL_PRODUTOS_ROWS = 10;
+    const STORAGE_KEY_OS = 'ecoplanet_os_sequencia_atual';
+
+    /**
+     * Formata o número da O.S. com 4 dígitos mínimos (ex: 0001, 0002, 1050)
+     */
+    function formatarNumeroOS(numero) {
+      const n = Math.max(1, parseInt(numero, 10) || 1);
+      return String(n).padStart(4, '0');
+    }
+
+    /**
+     * Obtém o número atual da O.S. salvo no localStorage (ou inicia em 1)
+     */
+    function obterNumeroOSAtual() {
+      try {
+        const salvo = localStorage.getItem(STORAGE_KEY_OS);
+        const numero = parseInt(salvo, 10);
+        if (!isNaN(numero) && numero >= 1) {
+          return numero;
+        }
+      } catch (e) {
+        // Caso localStorage esteja indisponível
+      }
+      return 1;
+    }
+
+    /**
+     * Salva o número da O.S. no localStorage e atualiza a interface
+     */
+    function definirNumeroOSAtual(novoNumero) {
+      const numeroValido = Math.max(1, parseInt(novoNumero, 10) || 1);
+      try {
+        localStorage.setItem(STORAGE_KEY_OS, String(numeroValido));
+      } catch (e) {
+        // Ignora erro de storage restrito
+      }
+
+      const formatado = formatarNumeroOS(numeroValido);
+      const osInput = document.getElementById('osNumero');
+      const pedidoInput = document.getElementById('pedidoNumero');
+      const badge = document.getElementById('badgeOsAtual');
+
+      if (osInput) osInput.value = formatado;
+      if (pedidoInput) pedidoInput.value = formatado;
+      if (badge) badge.textContent = `O.S. Nº ${formatado}`;
+    }
+
+    /**
+     * Incrementa a Ordem de Serviço em +1, atualiza a data de emissão e sincroniza o pedido
+     */
+    function gerarNovaOS() {
+      const atual = obterNumeroOSAtual();
+      const proximo = atual + 1;
+      definirNumeroOSAtual(proximo);
+
+      const emissaoInput = document.getElementById('pedidoEmissao');
+      if (emissaoInput) {
+        emissaoInput.value = new Date().toLocaleDateString('pt-BR');
+      }
+    }
+
+    /**
+     * Abre e fecha o modal para ajustar manualmente o número inicial/atual da sequência de O.S.
+     */
+    function abrirModalConfigOS() {
+      const modal = document.getElementById('modalConfigOS');
+      const input = document.getElementById('inputNovoNumeroOS');
+      if (input) {
+        input.value = obterNumeroOSAtual();
+      }
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (input) input.focus();
+    }
+
+    function fecharModalConfigOS() {
+      const modal = document.getElementById('modalConfigOS');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function salvarConfigOS() {
+      const input = document.getElementById('inputNovoNumeroOS');
+      const valor = parseInt(input.value, 10);
+      if (!isNaN(valor) && valor >= 1) {
+        definirNumeroOSAtual(valor);
+      }
+      fecharModalConfigOS();
+    }
+
+    /**
+     * Converte string no formato brasileiro ("R$ 7,50", "5,00%", "1.234,56") para número float
+     */
+    function parseNumeroBR(valorStr) {
+      if (!valorStr) return 0;
+      let limpo = String(valorStr)
+        .replace(/R\$/gi, '')
+        .replace(/%/g, '')
+        .replace(/\s+/g, '')
+        .trim();
+
+      if (!limpo) return 0;
+
+      // Se tiver vírgula, trata pontos como separador de milhar e vírgula como decimal
+      if (limpo.includes(',')) {
+        limpo = limpo.replace(/\./g, '').replace(',', '.');
+      }
+      const num = parseFloat(limpo);
+      return isNaN(num) ? 0 : num;
+    }
+
+    /**
+     * Formata número float para moeda brasileira "R$ 0,00"
+     */
+    function formatarMoedaBR(valor) {
+      const numero = Number(valor) || 0;
+      return 'R$ ' + numero.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    /**
+     * Formata número float para decimal brasileiro "0,00"
+     */
+    function formatarDecimalBR(valor) {
+      const numero = Number(valor) || 0;
+      return numero.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    /**
+     * Cria as 10 linhas da tabela de produtos
+     */
+    function criarLinhasProdutos() {
+      const tbody = document.getElementById('produtosBody');
+      tbody.innerHTML = '';
+
+      for (let i = 0; i < TOTAL_PRODUTOS_ROWS; i++) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="bg-cell-green grid-cell">
+            <input type="text" class="cell-input text-center-input prod-pecas" data-row="${i}" aria-label="Peças linha ${i + 1}" />
+          </td>
+          <td class="bg-cell-green grid-cell">
+            <input type="text" inputmode="decimal" class="cell-input text-center-input prod-qtde" data-row="${i}" aria-label="Quantidade linha ${i + 1}" />
+          </td>
+          <td class="bg-cell-green grid-cell">
+            <input type="text" class="cell-input text-center-input prod-unid" data-row="${i}" aria-label="Unidade linha ${i + 1}" />
+          </td>
+          <td class="bg-cell-green grid-cell">
+            <input type="text" class="cell-input text-left-input prod-nome" data-row="${i}" aria-label="Produto linha ${i + 1}" />
+          </td>
+          <td class="bg-cell-green grid-cell">
+            <input type="text" inputmode="decimal" class="cell-input text-center-input prod-preco" data-row="${i}" aria-label="Preço unitário linha ${i + 1}" />
+          </td>
+          <td class="bg-cell-subtotal grid-cell text-center prod-subtotal" id="subtotal-${i}"></td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      // Eventos de cálculo em tempo real e formatação de preço
+      const qtdeInputs = tbody.querySelectorAll('.prod-qtde');
+      const precoInputs = tbody.querySelectorAll('.prod-preco');
+
+      qtdeInputs.forEach((input) => {
+        input.addEventListener('input', recalcularTudo);
+      });
+
+      precoInputs.forEach((input) => {
+        input.addEventListener('input', recalcularTudo);
+
+        // Ao focar no campo de preço, exibe apenas o número com vírgula para facilitar edição
+        input.addEventListener('focus', function () {
+          const val = parseNumeroBR(this.value);
+          if (this.value.trim() !== '' && val > 0) {
+            this.value = formatarDecimalBR(val);
+          }
+        });
+
+        // Ao sair do campo de preço, formata como "R$ 7,50" igual à planilha original
+        input.addEventListener('blur', function () {
+          if (this.value.trim() !== '') {
+            const val = parseNumeroBR(this.value);
+            this.value = formatarMoedaBR(val);
+          }
+          recalcularTudo();
+        });
+      });
+    }
+
+    /**
+     * Recalcula todos os SubTotais das linhas, Valor Total dos Produtos, IPI e Total do Pedido
+     */
+    function recalcularTudo() {
+      let somaProdutos = 0;
+
+      for (let i = 0; i < TOTAL_PRODUTOS_ROWS; i++) {
+        const qtdeEl = document.querySelector(`.prod-qtde[data-row="${i}"]`);
+        const precoEl = document.querySelector(`.prod-preco[data-row="${i}"]`);
+        const subtotalCell = document.getElementById(`subtotal-${i}`);
+
+        const qtdeStr = qtdeEl ? qtdeEl.value.trim() : '';
+        const precoStr = precoEl ? precoEl.value.trim() : '';
+
+        if (qtdeStr === '' && precoStr === '') {
+          subtotalCell.textContent = '';
+          continue;
+        }
+
+        const qtde = parseNumeroBR(qtdeStr);
+        const preco = parseNumeroBR(precoStr);
+        const subtotal = qtde * preco;
+
+        if (qtdeStr !== '' || precoStr !== '') {
+          subtotalCell.textContent = formatarMoedaBR(subtotal);
+        } else {
+          subtotalCell.textContent = '';
+        }
+
+        somaProdutos += subtotal;
+      }
+
+      // Arredonda soma dos produtos para 2 casas decimais
+      const totalProdutosArredondado = Math.round((somaProdutos + Number.EPSILON) * 100) / 100;
+
+      // Percentual e Valor de IPI
+      const ipiInput = document.getElementById('ipiPercentual');
+      const ipiPercent = parseNumeroBR(ipiInput ? ipiInput.value : '0');
+      const valorIpi = Math.round(((totalProdutosArredondado * (ipiPercent / 100)) + Number.EPSILON) * 100) / 100;
+
+      // Percentual e Valor de ICMS
+      const icmsInput = document.getElementById('icmsPercentual');
+      const icmsPercent = parseNumeroBR(icmsInput ? icmsInput.value : '0');
+      const valorIcms = Math.round(((totalProdutosArredondado * (icmsPercent / 100)) + Number.EPSILON) * 100) / 100;
+
+      // Verifica a regra selecionada para o ICMS no Total do Pedido
+      const seletorModo = document.getElementById('modoCalculoIcms');
+      const modoIcms = seletorModo ? seletorModo.value : 'somar';
+      const labelTotal = document.getElementById('labelValorTotalPedido');
+
+      let totalPedidoFinal = 0;
+      if (modoIcms === 'somar') {
+        totalPedidoFinal = Math.round(((totalProdutosArredondado + valorIpi + valorIcms) + Number.EPSILON) * 100) / 100;
+        if (labelTotal) labelTotal.textContent = 'VALOR TOTAL DO PEDIDO (COM IPI E ICMS)';
+      } else {
+        totalPedidoFinal = Math.round(((totalProdutosArredondado + valorIpi) + Number.EPSILON) * 100) / 100;
+        if (labelTotal) labelTotal.textContent = 'VALOR TOTAL DO PEDIDO (COM IPI)';
+      }
+
+      // Atualiza células de totais
+      document.getElementById('valorTotalProdutos').textContent = formatarMoedaBR(totalProdutosArredondado);
+      document.getElementById('valorIpiCalculado').textContent = formatarMoedaBR(valorIpi);
+      document.getElementById('valorIcmsCalculado').textContent = formatarMoedaBR(valorIcms);
+      document.getElementById('valorTotalPedido').textContent = formatarMoedaBR(totalPedidoFinal);
+    }
+
+    /**
+     * Configura os eventos dos campos de impostos: IPI (%) e ICMS (%)
+     */
+    function configurarCamposImpostos() {
+      const camposIds = ['ipiPercentual', 'icmsPercentual'];
+
+      camposIds.forEach((id) => {
+        const input = document.getElementById(id);
+        if (!input) return;
+
+        input.addEventListener('input', recalcularTudo);
+
+        input.addEventListener('focus', function () {
+          const val = parseNumeroBR(this.value);
+          if (this.value.trim() !== '') {
+            this.value = formatarDecimalBR(val);
+          }
+        });
+
+        input.addEventListener('blur', function () {
+          const val = parseNumeroBR(this.value);
+          this.value = formatarDecimalBR(val) + '%';
+          recalcularTudo();
+        });
+      });
+
+      // Sincroniza edição manual do campo O.S. Número na planilha com o contador
+      const osInput = document.getElementById('osNumero');
+      if (osInput) {
+        osInput.addEventListener('change', function () {
+          const num = parseInt(this.value.replace(/\D/g, ''), 10);
+          if (!isNaN(num) && num >= 1) {
+            definirNumeroOSAtual(num);
+          }
+        });
+      }
+    }
+
+    /**
+     * Preenche a primeira linha com o exemplo exato da imagem e impostos padrão
+     */
+    function restaurarExemplo() {
+      // Limpa todas as linhas de produtos primeiro
+      document.querySelectorAll('#produtosBody input').forEach((inp) => (inp.value = ''));
+
+      // Linha 1: Peças="555", Qtde="55", Unid.="kg", Produto="granulado", Preço="R$ 7,50"
+      document.querySelector('.prod-pecas[data-row="0"]').value = '555';
+      document.querySelector('.prod-qtde[data-row="0"]').value = '55';
+      document.querySelector('.prod-unid[data-row="0"]').value = 'kg';
+      document.querySelector('.prod-nome[data-row="0"]').value = 'granulado';
+      document.querySelector('.prod-preco[data-row="0"]').value = 'R$ 7,50';
+
+      // IPI = 5,00% e ICMS = 18,00%
+      document.getElementById('ipiPercentual').value = '5,00%';
+      document.getElementById('icmsPercentual').value = '18,00%';
+
+      // Data de emissão padrão caso esteja vazia
+      const emissaoInput = document.getElementById('pedidoEmissao');
+      if (emissaoInput && !emissaoInput.value.trim()) {
+        emissaoInput.value = new Date().toLocaleDateString('pt-BR');
+      }
+
+      recalcularTudo();
+    }
+
+    /**
+     * Preenche a primeira linha de Duplicatas com o valor total atual do pedido e data de hoje
+     */
+    function gerarDuplicatasAutomaticas() {
+      const totalTexto = document.getElementById('valorTotalPedido').textContent;
+      const osAtual = document.getElementById('osNumero').value.trim() || formatarNumeroOS(obterNumeroOSAtual());
+      const numDoc = `${osAtual}/01`;
+      const emissaoPedido = document.getElementById('pedidoEmissao').value.trim() || new Date().toLocaleDateString('pt-BR');
+
+      const vencimentoData = new Date();
+      vencimentoData.setDate(vencimentoData.getDate() + 30);
+
+      const docs = document.querySelectorAll('.dup-doc');
+      const emissoes = document.querySelectorAll('.dup-emissao');
+      const vencs = document.querySelectorAll('.dup-venc');
+      const valores = document.querySelectorAll('.dup-valor');
+
+      if (docs[0]) docs[0].value = numDoc;
+      if (emissoes[0]) emissoes[0].value = emissaoPedido;
+      if (vencs[0]) vencs[0].value = vencimentoData.toLocaleDateString('pt-BR');
+      if (valores[0]) valores[0].value = totalTexto;
+    }
+
+    /**
+     * Controle do Modal de Limpar Formulário
+     */
+    function abrirModalLimpar() {
+      const modal = document.getElementById('modalLimpar');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function fecharModalLimpar() {
+      const modal = document.getElementById('modalLimpar');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function confirmarLimparFormulario() {
+      const osPreservada = document.getElementById('osNumero').value;
+      const pedidoPreservado = document.getElementById('pedidoNumero').value;
+      const emissaoPreservada = new Date().toLocaleDateString('pt-BR');
+
+      const todosInputs = document.querySelectorAll('#orderFormTable input');
+      todosInputs.forEach((input) => {
+        input.value = '';
+      });
+
+      // Mantém o número da O.S. atual e a data de emissão
+      document.getElementById('osNumero').value = osPreservada;
+      document.getElementById('pedidoNumero').value = pedidoPreservado;
+      document.getElementById('pedidoEmissao').value = emissaoPreservada;
+      document.getElementById('ipiPercentual').value = '0,00%';
+      document.getElementById('icmsPercentual').value = '0,00%';
+
+      recalcularTudo();
+      fecharModalLimpar();
+    }
+
+    // Inicialização ao carregar a página
+    window.addEventListener('DOMContentLoaded', () => {
+      criarLinhasProdutos();
+      configurarCamposImpostos();
+      definirNumeroOSAtual(obterNumeroOSAtual());
+      restaurarExemplo();
+    });
+  </script>
+</body>
+</html>
